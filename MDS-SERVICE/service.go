@@ -67,11 +67,11 @@ func (m *myservice) Execute(args []string, r <-chan svc.ChangeRequest, changes c
 	QUERYHUB_SEMAPHORE_STOPPED  	:= QUERYHUB_ROOT + QUERYHUB_SERVICE + ".IS.STOPPED"
 	
 	const supports = eventlog.Error | eventlog.Warning | eventlog.Info
-	err := eventlog.InstallAsEventCreate(SERVICE_NAME, supports)
+	err := eventlog.InstallAsEventCreate(QUERYHUB_SERVICE, supports)
 		if err != nil {
 			log.Printf("Event Log Install failed: %s", err)
 		}
-	winlog, err := eventlog.Open(SERVICE_NAME)
+	winlog, err := eventlog.Open(QUERYHUB_SERVICE)
 		if err != nil {
 			log.Printf("Event Log Open failed: %s", err)
 		}
@@ -99,24 +99,22 @@ func (m *myservice) Execute(args []string, r <-chan svc.ChangeRequest, changes c
 	cmdstdout.WriteString( "\r\n" )
 	
    	cmdcon.Write( []byte("\r\n") )
-      	cmdcon.Write( []byte("cd") )
+      	cmdcon.Write( []byte("cd ") )
       	cmdcon.Write( []byte( QUERYHUB_ROOT ) )
      	cmdcon.Write( []byte("\r\n") )
-      	cmdcon.Write( []byte("del") )
+      	cmdcon.Write( []byte("del ") )
       	cmdcon.Write( []byte( QUERYHUB_SEMAPHORE_STOPPED ) )
      	cmdcon.Write( []byte("\r\n") )
      	
 	semaphore, err := os.Create( QUERYHUB_SEMAPHORE_RUNNING )
 	semaphore.WriteString( "\r\n" )
-	semaphore.WriteString( QUERYHUB_SEMAPHORE_RUNNING )	
+	semaphore.WriteString( QUERYHUB_SERVICE + " is Running " )	
 	semaphore.WriteString( "\r\n" )
 	
    	cmdcon.Write( []byte( QUERYHUB_ACTIVATOR ) )
-      	cmdcon.Write( []byte(" start ") )
+	cmdcon.Write( []byte(" \"run -Dhttp.port=80  -Dhttps.port=443\"") )
    	cmdcon.Write( []byte("\r\n") )
-   	
-
-	
+   	   	
 loop:
 	for {
 		select {
@@ -132,8 +130,8 @@ loop:
 				time.Sleep(100 * time.Millisecond)
 				changes <- c.CurrentStatus
 			case svc.Stop, svc.Shutdown:
-				testfile.Close()
-			        os.Rename( "C:\\play\\portal\\queryhub\\MDS-SERVICE.IS.RUNNING", "C:\\play\\portal\\queryhub\\MDS-SERVICE.IS.STOPPED")
+				semaphore.Close()
+			        os.Rename( QUERYHUB_SEMAPHORE_RUNNING, QUERYHUB_SEMAPHORE_STOPPED )
 				err = winlog.Info(1, "SERVICE CLOSED")
 				break loop
 			case svc.Pause:
