@@ -15,7 +15,7 @@ import (
     	"os"
     	//"strings"
     	"io"
-    	"bytes"
+    	//"bytes"
 	"os/exec"
 	"log"
 )
@@ -24,97 +24,31 @@ var elog debug.Log
 
 type myservice struct{}
 
-	
-func launcher(cmdstid *io.PipeReader,  outfile *os.File, from string) {
 
-	const name = "QUERYHUB"
-	const supports = eventlog.Error | eventlog.Warning | eventlog.Info
-	err := eventlog.InstallAsEventCreate(name, supports)
-	
-	if err != nil {
-		log.Printf("Install failed: %s", err)
-	}
-	l, err := eventlog.Open(name)
-	if err != nil {
-		log.Printf("Open failed: %s", err)
-	}
-	
-	defer l.Close()
-	err = l.Info(1, from )
-	if err != nil {
-		log.Printf("Info failed: %s", err)
-	}
-	
-	//app := "cmd"
-        //arg00 := "C:\tmp\test.bat"
-        //arg01 := " "
-        
-	//app := "C:\\Program Files (x86)\\Java\\jdk17055\\bin\\java.exe"
-        //arg00 := "C:\\tmp\\test.bat"
-        //arg01 := " "
-        
+func launcher(cmdstid *io.PipeReader,  outfile *os.File, winlog *eventlog.Log, service string) {
+
+
+   	outfile.WriteString( "\r\nSTARTING CMD LAUNCHER for " )
+   	outfile.WriteString( service )
+     	outfile.WriteString( " \r\n  \r\n" )
+     	
         cmdName := "cmd"
-       // cmdName := "git"
-	cmdArgs := []string{"C:\\tmp\\test.bat", " ", " "}
-	//cmdArgs := []string{"rev-parse", "--verify", "HEAD"}
-	
+	cmdArgs := []string{" "}
 	cmd := exec.Command( cmdName, cmdArgs... )
 	cmd.Stdin = cmdstid
-	
-	//cmd.Stdin = strings.NewReader( arg00 )
-	//cmd := exec.Command("echo", "'WHAT THE HECK IS UP'")
-
-
-      
-	// open the out file for writing
-    	//outfile, err = os.Create("C:\\Go\\usr\\marcelle\\src\\src\\github.com\\huuzkee-foundation\\winsvc\\example\\LOG_DUMP.txt")
-    	//if err != nil {
-	//	err = l.Info(1, "FAILED outfile")
-   	// }
-   	//defer outfile.Close()
-   	outfile.WriteString( from )
-   	
-   	//var b bytes.Buffer
-	//b.Write([]byte("C:\\Users\\Marcelle\\git\\fincore\\FDM3-dev\\portal\\queryhub\\activator.bat run  >> LOG.TXT"))
-	//fmt.Fprintf(&b, "\n")
-	//b.WriteTo( xw )
-	
-   	//cmd.Stdin = xr
-    	cmd.Stdout = outfile
-    
-	err1 := cmd.Start()
-	cmd.Wait()
-	//err1 := cmd.Run()
-	//b.WriteTo( xw )
-		
-	if err1 != nil {
-		//log.Fatal(err)
-		err = l.Info(1, "FAILED")
-		if err != nil {
-			log.Printf("Info failed: %s", err)
+    	cmd.Stdout = outfile 
+	errCmd := cmd.Start()
+		if errCmd != nil {
+			errWl := winlog.Info(1, "cmd.Start() FAILED")
+			if errWl != nil {
+				log.Printf("Info failed: %s", errWl)
+			}
 		}
-	}
-	
-	
-	err = l.Info(1, "STARTED")
-	if err != nil {
-		log.Printf("Info failed: %s", err)
-	}
-	
-	
-
-	   // c1.Wait()
-	   // w.Close()
-    
-    
-    
-	log.Printf("Waiting for command to finish...")
-	//err = cmd.Wait()
-	log.Printf("Command finished with error: %v", err)
-	
-
-	
-
+	errWl := winlog.Info(1, "CMD LAUNCHER STARTED")
+		if errWl != nil {
+			log.Printf("Info failed: %s", errWl)
+		}
+	cmd.Wait()
 }
 
 func (m *myservice) Execute(args []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (ssec bool, errno uint32) {
@@ -125,45 +59,64 @@ func (m *myservice) Execute(args []string, r <-chan svc.ChangeRequest, changes c
 	tick := fasttick
 	changes <- svc.Status{State: svc.Running, Accepts: cmdsAccepted}
 	
+	SERVICE_NAME 		:= "MDS-QUERYHUB"
+	QUERYHUB_ROOT 		:= "C:\\play\\portal\\queryhub\\"
+	QUERYHUB_LOG		:= QUERYHUB_ROOT + "MDS-SERVICE.LOG"
+	QUERYHUB_ACTIVATOR	:= QUERYHUB_ROOT + "activator.bat"
 	
-	// open the out file for writing
-	outfile, err := os.Create("C:\\Go\\usr\\marcelle\\src\\src\\github.com\\huuzkee-foundation\\winsvc\\example\\LOG_DUMP.txt")
+	const supports = eventlog.Error | eventlog.Warning | eventlog.Info
+	err := eventlog.InstallAsEventCreate(SERVICE_NAME, supports)
+		if err != nil {
+			log.Printf("Event Log Install failed: %s", err)
+		}
+	winlog, err := eventlog.Open(SERVICE_NAME)
+		if err != nil {
+			log.Printf("Event Log Open failed: %s", err)
+		}
+	defer 	winlog.Close()
+	err = 	winlog.Info(1, "STARTING" )
+		if err != nil {
+			log.Printf("Event Log Info failed: %s", err)
+		}
 
-	if err != nil {
-		//err = l.Info(1, "FAILED outfile")
-	}
-   	defer outfile.Close()
+	// open the out file for writing
+	cmdstdout, err := os.Create( QUERYHUB_LOG )
+		if err != nil {
+			err = winlog.Info(1, "FAILED outfile")
+			if err != nil {
+				log.Printf("Event Log Info failed: %s", err)
+			}
+		}
+   	defer cmdstdout.Close()
    	
    	
 	cmdstdin,cmdcon  := io.Pipe()
-	go launcher( cmdstdin, 	outfile, "STARTING LAUNCHER\r\n")
+	go launcher( cmdstdin, 	cmdstdout, winlog, SERVICE_NAME )
 	
-	testfile, err := os.Create( "C:\\tmp\\test.txt.SEMAPHORE" )
+	testfile, err := os.Create( "C:\\play\\portal\\queryhub\\MDS-SERVICE.IS.RUNNING" )
 	
-	var b bytes.Buffer
-	b.Write([]byte("C:\\Users\\Marcelle\\git\\fincore\\FDM3-dev\\portal\\queryhub\\activator.bat "))
-	//b.Write([]byte("C:\\tmp\\test.bat"))
-	//fmt.Fprintf(&b, "\n")
+
 	
-	outfile.WriteString( "\r\n" )
-   	outfile.WriteString( b.String() )	
-	outfile.WriteString( "\r\n" )
+	cmdstdout.WriteString( "\r\n" )
+   	cmdstdout.WriteString( SERVICE_NAME )	
+	cmdstdout.WriteString( "\r\n" )
 	
 	testfile.WriteString( "\r\n" )
-	testfile.WriteString( b.String() )	
+	testfile.WriteString( SERVICE_NAME )	
 	testfile.WriteString( "\r\n" )
    	
    	cmdcon.Write( []byte("\r\n") )
       	cmdcon.Write( []byte("cd") )
       	cmdcon.Write( []byte( " C:\\Users\\Marcelle\\git\\fincore\\FDM3-dev\\portal\\queryhub\\") )
      	cmdcon.Write( []byte("\r\n") )
-   	cmdcon.Write( []byte(b.String()) )
-      	cmdcon.Write( []byte("start ") )
+      	cmdcon.Write( []byte("del") )
+      	cmdcon.Write( []byte(" C:\\play\\portal\\queryhub\\MDS-SERVICE.IS.STOPPED") )
+     	cmdcon.Write( []byte("\r\n") )
+   	cmdcon.Write( []byte( QUERYHUB_ACTIVATOR ) )
+      	cmdcon.Write( []byte(" start ") )
    	cmdcon.Write( []byte("\r\n") )
    	
-	//b.WriteTo( cmdcon )
-	//b.WriteTo( cmdcon )	
-	//b.WriteTo( cmdcon )
+
 	
 loop:
 	for {
@@ -181,11 +134,8 @@ loop:
 				changes <- c.CurrentStatus
 			case svc.Stop, svc.Shutdown:
 				testfile.Close()
-			        os.Rename( "C:\\tmp\\test.txt.SEMAPHORE", "C:\\tmp\\test.txt")
-			   	//outfile.WriteString("CLOSING\n")
-				//err = l.Info(1, "CLOSING")
-				//outfile.Close()
-				//err = l.Info(1, "CLOSED")
+			        os.Rename( "C:\\play\\portal\\queryhub\\MDS-SERVICE.IS.RUNNING", "C:\\play\\portal\\queryhub\\MDS-SERVICE.IS.STOPPED")
+				err = winlog.Info(1, "SERVICE CLOSED")
 				break loop
 			case svc.Pause:
 				changes <- svc.Status{State: svc.Paused, Accepts: cmdsAccepted}
