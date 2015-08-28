@@ -141,8 +141,8 @@ func (m *myservice) Execute(args []string, r <-chan svc.ChangeRequest, changes c
 	testfile, err := os.Create( "C:\\tmp\\test.txt.SEMAPHORE" )
 	
 	var b bytes.Buffer
-	//b.Write([]byte("C:\\Users\\Marcelle\\git\\fincore\\FDM3-dev\\portal\\queryhub\\activator.bat run  >> LOG.TXT"))
-	b.Write([]byte("C:\\tmp\\test.bat"))
+	b.Write([]byte("C:\\Users\\Marcelle\\git\\fincore\\FDM3-dev\\portal\\queryhub\\activator.bat "))
+	//b.Write([]byte("C:\\tmp\\test.bat"))
 	//fmt.Fprintf(&b, "\n")
 	
 	outfile.WriteString( "\r\n" )
@@ -154,7 +154,11 @@ func (m *myservice) Execute(args []string, r <-chan svc.ChangeRequest, changes c
 	testfile.WriteString( "\r\n" )
    	
    	cmdcon.Write( []byte("\r\n") )
+      	cmdcon.Write( []byte("cd") )
+      	cmdcon.Write( []byte( " C:\\Users\\Marcelle\\git\\fincore\\FDM3-dev\\portal\\queryhub\\") )
+     	cmdcon.Write( []byte("\r\n") )
    	cmdcon.Write( []byte(b.String()) )
+      	cmdcon.Write( []byte("start ") )
    	cmdcon.Write( []byte("\r\n") )
    	
 	//b.WriteTo( cmdcon )

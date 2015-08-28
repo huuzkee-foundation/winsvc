@@ -1,12 +1,82 @@
-STARTING LAUNCHER
 
-C:\tmp\test.bat
+C:\Users\Marcelle\git\fincore\FDM3-dev\portal\queryhub\activator.bat 
+STARTING LAUNCHER
 Microsoft Windows [Version 6.3.9600]
 (c) 2013 Microsoft Corporation. All rights reserved.
 
 C:\WINDOWS\system32>
-C:\WINDOWS\system32>C:\tmp\test.bat
+C:\WINDOWS\system32>cd C:\Users\Marcelle\git\fincore\FDM3-dev\portal\queryhub\
 
-C:\WINDOWS\system32>del c:\tmp\test.txt 
+C:\Users\Marcelle\git\fincore\FDM3-dev\portal\queryhub>C:\Users\Marcelle\git\fincore\FDM3-dev\portal\queryhub\activator.bat start 
+Getting org.fusesource.jansi jansi 1.11 ...
+You probably access the destination server through a proxy server that is not well configured.
+You probably access the destination server through a proxy server that is not well configured.
+You probably access the destination server through a proxy server that is not well configured.
+You probably access the destination server through a proxy server that is not well configured.
+You probably access the destination server through a proxy server that is not well configured.
 
-C:\WINDOWS\system32>
+:: problems summary ::
+:::: WARNINGS
+	Host repo1.maven.org not found. url=http://repo1.maven.org/maven2/org/fusesource/jansi/jansi/1.11/jansi-1.11.pom
+
+	Host repo1.maven.org not found. url=http://repo1.maven.org/maven2/org/fusesource/jansi/jansi/1.11/jansi-1.11.jar
+
+	Host repo.typesafe.com not found. url=http://repo.typesafe.com/typesafe/releases/org/fusesource/jansi/jansi/1.11/jansi-1.11.pom
+
+	Host repo.typesafe.com not found. url=http://repo.typesafe.com/typesafe/releases/org/fusesource/jansi/jansi/1.11/jansi-1.11.jar
+
+	Host repo.typesafe.com not found. url=http://repo.typesafe.com/typesafe/ivy-releases/org.fusesource.jansi/jansi/1.11/ivys/ivy.xml
+
+		module not found: org.fusesource.jansi#jansi;1.11
+
+	==== local: tried
+
+	  C:\WINDOWS\system32\config\systemprofile\.ivy2\local\org.fusesource.jansi\jansi\1.11\ivys\ivy.xml
+
+	  -- artifact org.fusesource.jansi#jansi;1.11!jansi.jar:
+
+	  C:\WINDOWS\system32\config\systemprofile\.ivy2\local\org.fusesource.jansi\jansi\1.11\jars\jansi.jar
+
+	==== activator-local: tried
+
+	  file:////C:/Users/Marcelle/git/fincore/FDM3-dev/portal/queryhub/repository/org.fusesource.jansi/jansi/1.11/ivys/ivy.xml
+
+	==== Maven Central: tried
+
+	  http://repo1.maven.org/maven2/org/fusesource/jansi/jansi/1.11/jansi-1.11.pom
+
+	  -- artifact org.fusesource.jansi#jansi;1.11!jansi.jar:
+
+	  http://repo1.maven.org/maven2/org/fusesource/jansi/jansi/1.11/jansi-1.11.jar
+
+	==== typesafe-releases: tried
+
+	  http://repo.typesafe.com/typesafe/releases/org/fusesource/jansi/jansi/1.11/jansi-1.11.pom
+
+	  -- artifact org.fusesource.jansi#jansi;1.11!jansi.jar:
+
+	  http://repo.typesafe.com/typesafe/releases/org/fusesource/jansi/jansi/1.11/jansi-1.11.jar
+
+	==== typesafe-ivy-releasez: tried
+
+	  http://repo.typesafe.com/typesafe/ivy-releases/org.fusesource.jansi/jansi/1.11/ivys/ivy.xml
+
+		::::::::::::::::::::::::::::::::::::::::::::::
+
+		::          UNRESOLVED DEPENDENCIES         ::
+
+		::::::::::::::::::::::::::::::::::::::::::::::
+
+		:: org.fusesource.jansi#jansi;1.11: not found
+
+		::::::::::::::::::::::::::::::::::::::::::::::
+
+
+
+:: USE VERBOSE OR DEBUG MESSAGE LEVEL FOR MORE DETAILS
+unresolved dependency: org.fusesource.jansi#jansi;1.11: not found
+Error during sbt execution: Error retrieving required libraries
+  (see C:\WINDOWS\system32\config\systemprofile\.sbt\boot\update.log for complete log)
+Error: Could not retrieve jansi 1.11
+
+C:\Users\Marcelle\git\fincore\FDM3-dev\portal\queryhub>
