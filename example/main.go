@@ -31,8 +31,8 @@ func usage(errmsg string) {
 }
 
 func main() {
-	const svcName = "FINCORE-QUERYHUB"
-	const svcDesc = "FINCORE-QUERYHUB Service"
+	const svcName = "QUERYHUB06"
+	const svcDesc = "FINCORE-QUERYHUB Service 06"
 	
 	isIntSess, err := svc.IsAnInteractiveSession()
 	if err != nil {

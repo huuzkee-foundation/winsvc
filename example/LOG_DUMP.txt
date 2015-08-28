@@ -1,0 +1,12 @@
+STARTING LAUNCHER
+
+C:\tmp\test.bat
+Microsoft Windows [Version 6.3.9600]
+(c) 2013 Microsoft Corporation. All rights reserved.
+
+C:\WINDOWS\system32>
+C:\WINDOWS\system32>C:\tmp\test.bat
+
+C:\WINDOWS\system32>del c:\tmp\test.txt 
+
+C:\WINDOWS\system32>
