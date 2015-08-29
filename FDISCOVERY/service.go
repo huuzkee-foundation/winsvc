@@ -21,13 +21,25 @@ import (
     	//"bytes"
 	"os/exec"
 	"log"
+	"path/filepath"
+	  
 )
 
 var elog debug.Log
 
 type myservice struct{}
 
-func dbwork ( outfile *os.File, ) {
+func walkpath(path string, f os.FileInfo, err error, outfile *os.File) error {
+   fmt.Printf("%s with %d bytes\n", path,f.Size())
+   return nil
+ }
+
+func filework( outfile *os.File, rootpath string) {
+   walker := func (path string, f os.FileInfo, err error)  error { walkpath(path, f , err, outfile) ; return nil  }
+   filepath.Walk(rootpath, walker )
+ }
+ 
+func dbwork ( outfile *os.File ) {
 
    outfile.WriteString( "\r\nSTART DBCONN \r\n\r\n" )
 	
@@ -158,6 +170,7 @@ func (m *myservice) Execute(args []string, r <-chan svc.ChangeRequest, changes c
 	
 	//go launcher( cmdstdin, 	cmdstdout, winlog, QUERYHUB_SERVICE )
 	go dbwork( cmdstdout )
+	go filework( cmdstdout, QUERYHUB_ROOT )
 	
 	cmdstdout.WriteString( "\r\n" )
    	cmdstdout.WriteString( QUERYHUB_SERVICE + " is Running " )	
