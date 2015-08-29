@@ -29,93 +29,129 @@ var elog debug.Log
 
 type myservice struct{}
 
-func walkpath(path string, f os.FileInfo, err error, outfile *os.File) error {
+type FileDesc struct{
+
+	RootId		string	
+	FileType	string
+	FileName	string	
+	FileExtension	string
+	FileDir		string
+	FilePath	string
+	FileSize	string
+	ModTimeLocal	string	
+	
+}
+
+func walkpath(path string, f os.FileInfo, err error, outfile *os.File, fchan chan FileDesc) error {
    
    filetype := "FILE"
    if f.IsDir() { filetype = "DIR" }
-   outfile.WriteString( filetype );
-   outfile.WriteString( ",\t")
-   outfile.WriteString( f.Name() );
-   outfile.WriteString( ",\t")
-   outfile.WriteString( filepath.Ext(path) );
-   outfile.WriteString( ",\t\"")
-   outfile.WriteString( filepath.Dir(path) );
-   outfile.WriteString( "\",\t\"")
-   outfile.WriteString( f.ModTime().String() );
-   outfile.WriteString( "\",\t")
-   outfile.WriteString( strconv.Itoa( int(f.Size()) ) );
-   outfile.WriteString( ",\t\"")
-   outfile.WriteString( path );
-   outfile.WriteString( "\"\r\n")
+   //outfile.WriteString( filetype );
+   //outfile.WriteString( ",\t\"")
+   //outfile.WriteString( f.Name() );
+   //outfile.WriteString( "\",\t")
+   //outfile.WriteString( filepath.Ext(path) );
+   //outfile.WriteString( ",\t\"")
+   //outfile.WriteString( filepath.Dir(path) );
+   //outfile.WriteString( "\",\t\"")
+   //outfile.WriteString( f.ModTime().String() );
+   //outfile.WriteString( "\",\t")
+   //outfile.WriteString( strconv.Itoa( int(f.Size()) ) );
+   //outfile.WriteString( ",\t\"")
+   //outfile.WriteString( path );
+   //outfile.WriteString( "\"\r\n")
+   
+   fdesc := FileDesc{ 	"0000",	filetype, f.Name(), filepath.Ext(path), filepath.Dir(path), path, strconv.Itoa( int(f.Size()) ), f.ModTime().String()	}
+   fchan <- fdesc
+   
    return nil
  }
 
-func filework( outfile *os.File, rootpath string) {
+func filework( outfile *os.File, rootpath string, fchan chan FileDesc) {
 
    outfile.WriteString( "\r\nSTART FILEWALKER \r\n" )
       
-   walker := func (path string, f os.FileInfo, err error)  error { walkpath(path, f , err, outfile) ; return nil  }
+   walker := func (path string, f os.FileInfo, err error)  error { walkpath(path, f , err, outfile, fchan ) ; return nil  }
    filepath.Walk(rootpath, walker )
    
    outfile.WriteString( "\r\nSTOP FILEWALKER \r\n" )
 
  }
  
-func dbwork ( outfile *os.File ) {
+func dbwork ( outfile *os.File, fchan chan FileDesc ) {
 
    outfile.WriteString( "\r\nSTART DBCONN \r\n\r\n" )
 	
- db, err := sql.Open("mysql", "fdiscovery:F1tPar0la@/fdiscovery")
+   db, err := sql.Open("mysql", "fdiscovery:F1tPar0la@/fdiscovery")
     if err != nil {
    	outfile.WriteString(err.Error())  // Just for example purpose. You should use proper error handling instead of panic
     }
     defer db.Close()
 
-    _, err = db.Exec("DELETE FROM squarenum") 
+    //_, err = db.Exec("DELETE FROM squarenum") 
 
     // Prepare statement for inserting data
-    stmtIns, err := db.Prepare("INSERT INTO squareNum VALUES( ?, ? )") // ? = placeholder
+    //stmtIns, err := db.Prepare("INSERT INTO squareNum VALUES( ?, ? )") // ? = placeholder
+    stmtIns, err := db.Prepare("INSERT INTO SourceFiles VALUES( ?, ?, ?, ?, ?, ?, ?, ?, ? )") // ? = placeholder 
     if err != nil {
    	outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
     }
     defer stmtIns.Close() // Close the statement when we leave main() / the program terminates
 
     // Prepare statement for reading data
-    stmtOut, err := db.Prepare("SELECT squareNumber FROM squarenum WHERE number = ?")
-    if err != nil {
-   	outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
-    }
-    defer stmtOut.Close()
+    //stmtOut, err := db.Prepare("SELECT squareNumber FROM squarenum WHERE number = ?")
+    //if err != nil {
+    //	outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
+    //}
+    //defer stmtOut.Close()
 
     // Insert square numbers for 0-24 in the database
-    for i := 0; i < 25; i++ {
-        _, err = stmtIns.Exec(i, (i * i)) // Insert tuples (i, i^2)
-        if err != nil {
-   		outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
-        }
+    //for i := 0; i < 25; i++ {
+    //    _, err = stmtIns.Exec(i, (i * i)) // Insert tuples (i, i^2)
+    //    if err != nil {
+    //		outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
+    //    }
+    //}
+    
+    recid := 1
+    
+    for {
+	select {
+            case fd := <-fchan:
+            	      recid = recid + 1
+    		      _, err = stmtIns.Exec( strconv.Itoa( int(recid)), fd.RootId, fd.FileType, fd.FileName, fd.FileExtension, fd.FileDir, fd.FilePath, fd.FileSize, fd.ModTimeLocal  ) // Insert data from fd
+    		      if err != nil {
+    				outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
+   		      }
+            //default:
+    	    //      outfile.WriteString("NO FILE INFOR RECEIVED\r\n")
+    	}
     }
+    
 
-    var squareNum int // we "scan" the result in here
+    
+
+    //var squareNum int // we "scan" the result in here
 
     // Query the square-number of 7
-    err = stmtOut.QueryRow(7).Scan(&squareNum) // WHERE number = 13
-    if err != nil {
-   	outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
-    }
-   outfile.WriteString("The square number of 7 is: ")
-   outfile.WriteString( strconv.Itoa(squareNum))
-   outfile.WriteString("\r\n")
+    //err = stmtOut.QueryRow(7).Scan(&squareNum) // WHERE number = 13
+    //if err != nil {
+    //	outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
+    //}
+    //outfile.WriteString("The square number of 7 is: ")
+    //outfile.WriteString( strconv.Itoa(squareNum))
+    //outfile.WriteString("\r\n")
    
     // Query another number.. 1 maybe?
-    err = stmtOut.QueryRow(4).Scan(&squareNum) // WHERE number = 1
-    if err != nil {
-   outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
-    }
-   outfile.WriteString("The square number of 4 is: ") 
-   outfile.WriteString(strconv.Itoa(squareNum))
-   outfile.WriteString("\r\n")
+    //err = stmtOut.QueryRow(4).Scan(&squareNum) // WHERE number = 1
+    //if err != nil {
+    //outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
+    //}
+    // outfile.WriteString("The square number of 4 is: ") 
+    //outfile.WriteString(strconv.Itoa(squareNum))
+    //outfile.WriteString("\r\n")
    
-      outfile.WriteString( "\r\nSTOP DBCONN \r\n" )
+    outfile.WriteString( "\r\nSTOP DBCONN \r\n" )
       
    return
 
@@ -163,6 +199,9 @@ func (m *myservice) Execute(args []string, r <-chan svc.ChangeRequest, changes c
 	QUERYHUB_SEMAPHORE_RUNNING  	:= QUERYHUB_ROOT + QUERYHUB_SERVICE + ".IS.RUNNING"
 	QUERYHUB_SEMAPHORE_STOPPED  	:= QUERYHUB_ROOT + QUERYHUB_SERVICE + ".IS.STOPPED"
 	
+	
+	filechannel := make(chan FileDesc)
+		
 	const supports = eventlog.Error | eventlog.Warning | eventlog.Info
 	err := eventlog.InstallAsEventCreate(QUERYHUB_SERVICE, supports)
 		if err != nil {
@@ -193,7 +232,7 @@ func (m *myservice) Execute(args []string, r <-chan svc.ChangeRequest, changes c
 	
 	//go launcher( cmdstdin, 	cmdstdout, winlog, QUERYHUB_SERVICE )
 	//go dbwork( cmdstdout )
-	go filework( cmdstdout, QUERYHUB_ROOT )
+
 	
 	cmdstdout.WriteString( "\r\n" )
    	cmdstdout.WriteString( QUERYHUB_SERVICE + " is Running " )	
@@ -211,6 +250,9 @@ func (m *myservice) Execute(args []string, r <-chan svc.ChangeRequest, changes c
 	semaphore.WriteString( "\r\n" )
 	semaphore.WriteString( QUERYHUB_SERVICE + " is Running " )	
 	semaphore.WriteString( "\r\n" )
+	
+	go filework( cmdstdout, QUERYHUB_ROOT, filechannel )
+	go dbwork( cmdstdout, filechannel )
 	
    	//cmdcon.Write( []byte( QUERYHUB_ACTIVATOR ) )
 	//cmdcon.Write( []byte(" \"run -Dhttp.port=80  -Dhttps.port=443\"") )
