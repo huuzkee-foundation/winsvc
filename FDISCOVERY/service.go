@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"time"
     	"os"
+    	"strconv"
     	//"strings"
     	"io"
     	//"bytes"
@@ -28,13 +29,15 @@ type myservice struct{}
 
 func dbwork ( outfile *os.File, ) {
 
-   outfile.WriteString( "\r\nSTART DBCONN \r\n" )
+   outfile.WriteString( "\r\nSTART DBCONN \r\n\r\n" )
 	
  db, err := sql.Open("mysql", "fdiscovery:F1tPar0la@/fdiscovery")
     if err != nil {
    	outfile.WriteString(err.Error())  // Just for example purpose. You should use proper error handling instead of panic
     }
     defer db.Close()
+
+    _, err = db.Exec("DELETE FROM squarenum") 
 
     // Prepare statement for inserting data
     stmtIns, err := db.Prepare("INSERT INTO squareNum VALUES( ?, ? )") // ? = placeholder
@@ -60,22 +63,26 @@ func dbwork ( outfile *os.File, ) {
 
     var squareNum int // we "scan" the result in here
 
-    // Query the square-number of 13
-    err = stmtOut.QueryRow(13).Scan(&squareNum) // WHERE number = 13
+    // Query the square-number of 7
+    err = stmtOut.QueryRow(7).Scan(&squareNum) // WHERE number = 13
     if err != nil {
    	outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
     }
-   outfile.WriteString("The square number of 13 is: ")
-   outfile.WriteString(string(squareNum))
-
+   outfile.WriteString("The square number of 7 is: ")
+   outfile.WriteString( strconv.Itoa(squareNum))
+   outfile.WriteString("\r\n")
+   
     // Query another number.. 1 maybe?
-    err = stmtOut.QueryRow(1).Scan(&squareNum) // WHERE number = 1
+    err = stmtOut.QueryRow(4).Scan(&squareNum) // WHERE number = 1
     if err != nil {
    outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
     }
-   outfile.WriteString("The square number of 1 is: %d") 
-   outfile.WriteString(string(squareNum))
+   outfile.WriteString("The square number of 4 is: ") 
+   outfile.WriteString(strconv.Itoa(squareNum))
+   outfile.WriteString("\r\n")
    
+      outfile.WriteString( "\r\nSTOP DBCONN \r\n" )
+      
    return
 
 }
@@ -117,7 +124,7 @@ func (m *myservice) Execute(args []string, r <-chan svc.ChangeRequest, changes c
 	QUERYHUB_SERVICE		:= "MDS-SERVICE"
 	QUERYHUB_ROOT 			:= "C:\\play\\portal\\queryhub\\"
 	QUERYHUB_LOG			:= QUERYHUB_ROOT + QUERYHUB_SERVICE + ".LOG"
-	QUERYHUB_ACTIVATOR		:= QUERYHUB_ROOT + "activator.bat"
+	//QUERYHUB_ACTIVATOR		:= QUERYHUB_ROOT + "activator.bat"
 	QUERYHUB_SEMAPHORE_RUNNING  	:= QUERYHUB_ROOT + QUERYHUB_SERVICE + ".IS.RUNNING"
 	QUERYHUB_SEMAPHORE_STOPPED  	:= QUERYHUB_ROOT + QUERYHUB_SERVICE + ".IS.STOPPED"
 	
@@ -146,7 +153,7 @@ func (m *myservice) Execute(args []string, r <-chan svc.ChangeRequest, changes c
 		}
    	defer cmdstdout.Close()
    	   	
-	_,cmdcon  := io.Pipe()
+	//_,cmdcon  := io.Pipe()
 	//cmdstdin,cmdcon  := io.Pipe()
 	
 	//go launcher( cmdstdin, 	cmdstdout, winlog, QUERYHUB_SERVICE )
@@ -156,22 +163,22 @@ func (m *myservice) Execute(args []string, r <-chan svc.ChangeRequest, changes c
    	cmdstdout.WriteString( QUERYHUB_SERVICE + " is Running " )	
 	cmdstdout.WriteString( "\r\n" )
 	
-   	cmdcon.Write( []byte("\r\n") )
-      	cmdcon.Write( []byte("cd ") )
-      	cmdcon.Write( []byte( QUERYHUB_ROOT ) )
-     	cmdcon.Write( []byte("\r\n") )
-      	cmdcon.Write( []byte("del ") )
-      	cmdcon.Write( []byte( QUERYHUB_SEMAPHORE_STOPPED ) )
-     	cmdcon.Write( []byte("\r\n") )
+   	//cmdcon.Write( []byte("\r\n") )
+      	//cmdcon.Write( []byte("cd ") )
+      	//cmdcon.Write( []byte( QUERYHUB_ROOT ) )
+     	//cmdcon.Write( []byte("\r\n") )
+      	//cmdcon.Write( []byte("del ") )
+      	//cmdcon.Write( []byte( QUERYHUB_SEMAPHORE_STOPPED ) )
+     	//cmdcon.Write( []byte("\r\n") )
      	
 	semaphore, err := os.Create( QUERYHUB_SEMAPHORE_RUNNING )
 	semaphore.WriteString( "\r\n" )
 	semaphore.WriteString( QUERYHUB_SERVICE + " is Running " )	
 	semaphore.WriteString( "\r\n" )
 	
-   	cmdcon.Write( []byte( QUERYHUB_ACTIVATOR ) )
-	cmdcon.Write( []byte(" \"run -Dhttp.port=80  -Dhttps.port=443\"") )
-   	cmdcon.Write( []byte("\r\n") )
+   	//cmdcon.Write( []byte( QUERYHUB_ACTIVATOR ) )
+	//cmdcon.Write( []byte(" \"run -Dhttp.port=80  -Dhttps.port=443\"") )
+   	//cmdcon.Write( []byte("\r\n") )
    	   	
 loop:
 	for {
