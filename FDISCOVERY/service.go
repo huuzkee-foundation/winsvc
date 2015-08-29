@@ -30,13 +30,22 @@ var elog debug.Log
 type myservice struct{}
 
 func walkpath(path string, f os.FileInfo, err error, outfile *os.File) error {
-   fmt.Printf("%s with %d bytes\n", path,f.Size())
+   outfile.WriteString( path );
+   outfile.WriteString( ",\tSize: ")
+   outfile.WriteString( strconv.Itoa( int(f.Size()) ) );
+   outfile.WriteString( "\r\n")
    return nil
  }
 
 func filework( outfile *os.File, rootpath string) {
+
+   outfile.WriteString( "\r\nSTART FILEWALKER \r\n" )
+      
    walker := func (path string, f os.FileInfo, err error)  error { walkpath(path, f , err, outfile) ; return nil  }
    filepath.Walk(rootpath, walker )
+   
+   outfile.WriteString( "\r\nSTOP FILEWALKER \r\n" )
+
  }
  
 func dbwork ( outfile *os.File ) {
