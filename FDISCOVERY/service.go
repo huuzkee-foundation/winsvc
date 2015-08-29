@@ -30,10 +30,16 @@ var elog debug.Log
 type myservice struct{}
 
 func walkpath(path string, f os.FileInfo, err error, outfile *os.File) error {
-   outfile.WriteString( path );
+   
+   filetype := "FILE"
+   if f.IsDir() { filetype = "DIR" }
+   outfile.WriteString( ",Type: ")
+   outfile.WriteString( filetype );
    outfile.WriteString( ",\tSize: ")
    outfile.WriteString( strconv.Itoa( int(f.Size()) ) );
-   outfile.WriteString( "\r\n")
+   outfile.WriteString( ",\tPath: \"")
+   outfile.WriteString( path );
+   outfile.WriteString( "\"\r\n")
    return nil
  }
 
