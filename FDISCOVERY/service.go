@@ -33,11 +33,18 @@ func walkpath(path string, f os.FileInfo, err error, outfile *os.File) error {
    
    filetype := "FILE"
    if f.IsDir() { filetype = "DIR" }
-   outfile.WriteString( ",Type: ")
    outfile.WriteString( filetype );
-   outfile.WriteString( ",\tSize: ")
+   outfile.WriteString( ",\t")
+   outfile.WriteString( f.Name() );
+   outfile.WriteString( ",\t")
+   outfile.WriteString( filepath.Ext(path) );
+   outfile.WriteString( ",\t\"")
+   outfile.WriteString( filepath.Dir(path) );
+   outfile.WriteString( "\",\t\"")
+   outfile.WriteString( f.ModTime().String() );
+   outfile.WriteString( "\",\t")
    outfile.WriteString( strconv.Itoa( int(f.Size()) ) );
-   outfile.WriteString( ",\tPath: \"")
+   outfile.WriteString( ",\t\"")
    outfile.WriteString( path );
    outfile.WriteString( "\"\r\n")
    return nil
@@ -149,7 +156,8 @@ func (m *myservice) Execute(args []string, r <-chan svc.ChangeRequest, changes c
 	changes <- svc.Status{State: svc.Running, Accepts: cmdsAccepted}
 	
 	QUERYHUB_SERVICE		:= "MDS-SERVICE"
-	QUERYHUB_ROOT 			:= "C:\\play\\portal\\queryhub\\"
+	//QUERYHUB_ROOT 			:= "C:\\play\\portal\\queryhub\\"
+	QUERYHUB_ROOT 			:= "D:\\"
 	QUERYHUB_LOG			:= QUERYHUB_ROOT + QUERYHUB_SERVICE + ".LOG"
 	//QUERYHUB_ACTIVATOR		:= QUERYHUB_ROOT + "activator.bat"
 	QUERYHUB_SEMAPHORE_RUNNING  	:= QUERYHUB_ROOT + QUERYHUB_SERVICE + ".IS.RUNNING"
@@ -184,7 +192,7 @@ func (m *myservice) Execute(args []string, r <-chan svc.ChangeRequest, changes c
 	//cmdstdin,cmdcon  := io.Pipe()
 	
 	//go launcher( cmdstdin, 	cmdstdout, winlog, QUERYHUB_SERVICE )
-	go dbwork( cmdstdout )
+	//go dbwork( cmdstdout )
 	go filework( cmdstdout, QUERYHUB_ROOT )
 	
 	cmdstdout.WriteString( "\r\n" )
