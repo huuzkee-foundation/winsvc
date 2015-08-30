@@ -295,10 +295,13 @@ for i := 4 ; i < 1438884 ; i++ {
     		outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
    	}
     ///===============================================================================
-    //FileSizeNum, err := strconv.ParseInt(FileSize, 20, 64)
-    FileSizeNum, err := strconv.Atoi( FileSize )
+    FileSizeNum, err := strconv.ParseInt(FileSize, 10, 64)
+    //FileSizeNum, err := strconv.Atoi( FileSize )
     _, err = stFileSize.Exec( RecId, FileSizeNum  ) // Insert data from fd
     	if err != nil {
+    		outfile.WriteString( "\r\nFileSize: " )
+    		outfile.WriteString( FileSize )
+        	outfile.WriteString( "\r\n" )
     		outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
    	} 
     ///===============================================================================	
