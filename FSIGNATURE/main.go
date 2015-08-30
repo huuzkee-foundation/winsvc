@@ -31,8 +31,8 @@ func usage(errmsg string) {
 }
 
 func main() {
-	const svcName = "FDISCOVERY01"
-	const svcDesc = "FDISCOVERY01-Middleware"
+	const svcName = "FSIGNATURE"
+	const svcDesc = "FSIGNATURE-Middleware"
 	
 	isIntSess, err := svc.IsAnInteractiveSession()
 	if err != nil {

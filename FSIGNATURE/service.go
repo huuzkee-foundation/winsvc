@@ -22,15 +22,24 @@ import (
 	"os/exec"
 	"log"
 	"path/filepath"
-	  
+	"crypto/sha256"
+    	"encoding/base64"
+        "math"
+
+
+
 )
 
+
+
+   
 var elog debug.Log
 
 type myservice struct{}
 
 type FileDesc struct{
 
+	//RecId		int64	
 	RootId		string	
 	FileType	string
 	FileName	string	
@@ -41,6 +50,207 @@ type FileDesc struct{
 	ModTimeLocal	string	
 	
 }
+//////////////////////////////////////////////////////////
+
+type FileNameHash struct{
+	RecId		string	
+	FileName	string	
+	FileNameHash	string	
+}
+//---------------------------------------------------------
+type FileDirHash struct{
+	RecId		string	
+	FilDir		string	
+	FileDirHash	string	
+}
+//---------------------------------------------------------
+type FilePathHash struct{
+	RecId		string	
+	FilePath	string	
+	FilePathHash	string	
+}
+//---------------------------------------------------------
+type FileHash struct{
+	RecId		string		
+	FileHash	string	
+}
+//---------------------------------------------------------
+type FileSize struct{
+	RecId		string		
+	FileSize	int64	
+}
+//---------------------------------------------------------
+type FileStatus struct{
+	RecId		string		
+	FileStatus	string	
+}
+//---------------------------------------------------------
+
+func procfiles ( outfile *os.File ) {
+
+   const filechunk = 8192    // we settle for 8KB  
+   
+   outfile.WriteString( "\r\nSTART PROCFILES \r\n\r\n" )
+	
+   db, err := sql.Open("mysql", "fdiscovery:F1tPar0la@/fdiscovery")
+    if err != nil {
+   	outfile.WriteString(err.Error())  // Just for example purpose. You should use proper error handling instead of panic
+    }
+    defer db.Close()
+
+
+    //----------------------------------------------------------------------
+    // Prepare statement for inserting data into fdiscovery.filenamehash ///
+    stFileNameHash, err := db.Prepare("INSERT INTO fdiscovery.filenamehash  VALUES( ?, ? )") // 
+	    if err != nil {
+		outfile.WriteString(err.Error()) //  
+	    }
+    defer stFileNameHash.Close() //  
+    //----------------------------------------------------------------------
+    // Prepare statement for inserting data into fdiscovery.filedirhash ///
+    stFileDirHash, err := db.Prepare("INSERT INTO fdiscovery.filedirhash  VALUES( ?, ? )") // 
+	    if err != nil {
+		outfile.WriteString(err.Error()) //  
+	    }
+    defer stFileDirHash.Close() //  
+    //----------------------------------------------------------------------
+    // Prepare statement for inserting data into fdiscovery.filepathhash ///
+    stFilePathHash, err := db.Prepare("INSERT INTO fdiscovery.filepathhash  VALUES( ?, ? )") // 
+	    if err != nil {
+		outfile.WriteString(err.Error()) //  
+	    }
+    defer stFilePathHash.Close() //  
+    //----------------------------------------------------------------------
+    // Prepare statement for inserting data into fdiscovery.filehash ///
+    stFileHash, err := db.Prepare("INSERT INTO fdiscovery.filehash  VALUES( ?, ? )") // 
+	    if err != nil {
+		outfile.WriteString(err.Error()) //  
+	    }
+    defer stFileHash.Close() //  
+    //----------------------------------------------------------------------
+    // Prepare statement for inserting data into fdiscovery.filesize ///
+    stFileSize, err := db.Prepare("INSERT INTO fdiscovery.filesize  VALUES( ?, ? )") // 
+	    if err != nil {
+		outfile.WriteString(err.Error()) //  
+	    }
+    defer stFileSize.Close() // 
+    //----------------------------------------------------------------------
+    // Prepare statement for inserting data into fdiscovery.filestatus ///
+    stFileStatus, err := db.Prepare("INSERT INTO fdiscovery.filestatus  VALUES( ?, ? )") // 
+	    if err != nil {
+		outfile.WriteString(err.Error()) //  
+	    }
+    defer stFileStatus.Close() // 
+    
+
+filequery, err := db.Prepare("SELECT RecId, RootId, FileType, FileName, FileExtension,	FileDir, FilePath, FileSize, ModTimeLocal FROM fdiscovery.sourcefiles WHERE RecId = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+var (
+	RecId		int64	
+	RootId		string	
+	FileType	string
+	FileName	string	
+	FileExtension	string
+	FileDir		string
+	FilePath	string
+	FileSize	string
+	ModTimeLocal	string	
+	//FileNameHash	string	
+	//FileDirHash	string	
+	//FilePathHash	string	
+	//FileHash	string	
+	//FileStatus	string	
+	//FileSizeNum	int64
+)
+
+FileStatus := "NEW"
+
+for i := 2; i < 100; i++ {
+    err = filequery.QueryRow(i).Scan( &RecId, &RootId, &FileType, &FileName, &FileExtension, &FileDir, &FilePath, &FileSize, &ModTimeLocal)
+    if err != nil {
+    		outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
+    }
+    outfile.WriteString( FileName )
+    outfile.WriteString( FilePath )
+    
+    ///===============================================================================
+    FileNameVec := []byte(FileName) 
+    FileNameHasher := sha256.New()
+    FileNameHasher.Write(FileNameVec)
+    FileNameHash := base64.URLEncoding.EncodeToString(FileNameHasher.Sum(nil))
+    _, err = stFileNameHash.Exec( RecId, FileNameHash  ) // Insert data from fd
+    	if err != nil {
+    		outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
+   	}
+    ///===============================================================================
+    FileDirVec := []byte(FileDir) 
+    FileDirHasher := sha256.New()
+    FileDirHasher.Write(FileDirVec)
+    FileDirHash := base64.URLEncoding.EncodeToString(FileDirHasher.Sum(nil))
+    _, err = stFileDirHash.Exec( RecId,  FileDirHash  ) // Insert data from fd
+    	if err != nil {
+    		outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
+   	}  
+    ///===============================================================================
+    FilePathVec := []byte(FilePath) 
+    FilePathHasher := sha256.New()
+    FilePathHasher.Write(FilePathVec)
+    FilePathHash := base64.URLEncoding.EncodeToString(FilePathHasher.Sum(nil))
+    _, err = stFilePathHash.Exec( RecId,  FilePathHash  ) // Insert data from fd
+    	if err != nil {
+    		outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
+   	}
+    ///===============================================================================
+    FileSizeNum, err := strconv.ParseInt(FileSize, 10, 64)
+    _, err = stFileSize.Exec( RecId, FileSizeNum  ) // Insert data from fd
+    	if err != nil {
+    		outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
+   	} 
+    ///===============================================================================	
+    _, err = stFileStatus.Exec( RecId, FileStatus  ) // Insert data from fd
+    	if err != nil {
+    		outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
+   	} 
+    ///===============================================================================	
+    FileHash := "DIR"
+    if FileType == "FILE" {
+	    outfile.WriteString( FilePath )
+	    File, err := os.Open( FilePath )
+		if err != nil {
+			outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
+		}
+	    defer File.Close()
+	    FileHasher := sha256.New()
+	    // calculate the file size  
+	    info, _ := File.Stat()
+	    ifilesize := info.Size()  
+	    blocks := uint64(math.Ceil(float64(ifilesize) / float64(filechunk)))
+	    blocksize := int(math.Min(filechunk, float64(ifilesize-int64(i*filechunk))))
+	    buf := make([] byte, blocksize)
+	    for i := uint64(0); i < blocks; i++ {
+		  File.Read(buf)
+		  FileHasher.Write( buf )
+	    }
+	    FileHash = base64.URLEncoding.EncodeToString(FileHasher.Sum(nil))
+    }
+    _, err = stFileHash.Exec( RecId, FileHash  ) // Insert data from fd
+	if err != nil {
+		outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
+	}
+
+    ///===============================================================================	
+
+    
+    
+    
+}
+
+}
+
+
+//////////////////////////////////////////////////////////
 
 func walkpath(path string, f os.FileInfo, err error, outfile *os.File, fchan chan FileDesc) error {
    
@@ -200,7 +410,7 @@ func (m *myservice) Execute(args []string, r <-chan svc.ChangeRequest, changes c
 	QUERYHUB_SEMAPHORE_STOPPED  	:= QUERYHUB_ROOT + QUERYHUB_SERVICE + ".IS.STOPPED"
 	
 	
-	filechannel := make(chan FileDesc)
+	//filechannel := make(chan FileDesc)
 		
 	const supports = eventlog.Error | eventlog.Warning | eventlog.Info
 	err := eventlog.InstallAsEventCreate(QUERYHUB_SERVICE, supports)
@@ -251,8 +461,9 @@ func (m *myservice) Execute(args []string, r <-chan svc.ChangeRequest, changes c
 	semaphore.WriteString( QUERYHUB_SERVICE + " is Running " )	
 	semaphore.WriteString( "\r\n" )
 	
-	go filework( cmdstdout, QUERYHUB_ROOT, filechannel )
-	go dbwork( cmdstdout, filechannel )
+	//go filework( cmdstdout, QUERYHUB_ROOT, filechannel )
+	//go dbwork( cmdstdout, filechannel )
+	go procfiles ( cmdstdout )
 	
    	//cmdcon.Write( []byte( QUERYHUB_ACTIVATOR ) )
 	//cmdcon.Write( []byte(" \"run -Dhttp.port=80  -Dhttps.port=443\"") )
