@@ -162,12 +162,12 @@ func procdirs(outfile *os.File) {
 		if err != nil {
 			outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
 		}
-		outfile.WriteString( "\r\nFILENO: " )
-		outfile.WriteString( strconv.Itoa( int( i) ) );
+		outfile.WriteString("\r\nFILENO: ")
+		outfile.WriteString(strconv.Itoa(int(i)))
 		//outfile.WriteString( "\r\nFILENAME: " )
 		//outfile.WriteString( FileName )
-		outfile.WriteString( "\r\nFILEPATH: " )
-		outfile.WriteString( FilePath )
+		outfile.WriteString("\r\nFILEPATH: ")
+		outfile.WriteString(FilePath)
 
 		if FileType == "FILE" {
 
@@ -711,7 +711,6 @@ func (m *myservice) Execute(args []string, r <-chan svc.ChangeRequest, changes c
 	//go dbwork( cmdstdout, filechannel )
 	//go procfiles(cmdstdout)
 	go procdirs(cmdstdout)
-	
 
 	//cmdcon.Write( []byte( QUERYHUB_ACTIVATOR ) )
 	//cmdcon.Write( []byte(" \"run -Dhttp.port=80  -Dhttps.port=443\"") )
