@@ -16,7 +16,7 @@ import (
 	"time"
     	"os"
     	"strconv"
-    	//"strings"
+    	"strings"
     	"io"
     	//"bytes"
 	"os/exec"
@@ -167,7 +167,7 @@ var (
 
 FileStatus := "NEW"
 
-for i := 2; i < 100; i++ {
+for i := 46; i < 1000; i++ {
     err = filequery.QueryRow(i).Scan( &RecId, &RootId, &FileType, &FileName, &FileExtension, &FileDir, &FilePath, &FileSize, &ModTimeLocal)
     if err != nil {
     		outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
@@ -214,12 +214,23 @@ for i := 2; i < 100; i++ {
     		outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
    	} 
     ///===============================================================================	
-    FileHash := "DIR"
+    FileHash := "DIR"   
+    RECY := "D:\\$RECYCLE.BIN\\"
+
+    if strings.Contains(FilePath, RECY) { 
+        outfile.WriteString( "\r\n PROBLEM: " )
+        outfile.WriteString( FilePath )
+    }
+    
     if FileType == "FILE" {
+    if true != strings.Contains(FilePath, RECY)  {    
+	    outfile.WriteString( "\r\nFILE: " )
 	    outfile.WriteString( FilePath )
-	    File, err := os.Open( FilePath )
-		if err != nil {
-			outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
+	    File, err1 := os.Open( FilePath )
+		if err1 != nil {
+	    		outfile.WriteString( "\r\nFILE ERROR !!!!\r\n" )
+			outfile.WriteString(err1.Error()) // proper error handling instead of panic in your app
+	    		outfile.WriteString( "\r\n" )
 		}
 	    defer File.Close()
 	    FileHasher := sha256.New()
@@ -235,10 +246,14 @@ for i := 2; i < 100; i++ {
 	    }
 	    FileHash = base64.URLEncoding.EncodeToString(FileHasher.Sum(nil))
     }
+    }
     _, err = stFileHash.Exec( RecId, FileHash  ) // Insert data from fd
 	if err != nil {
+	    	outfile.WriteString( "\r\nDBERROR\r\n" )
 		outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
+	    	outfile.WriteString( "\r\n" )
 	}
+
 
     ///===============================================================================	
 
