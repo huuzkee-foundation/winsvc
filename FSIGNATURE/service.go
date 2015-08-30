@@ -24,7 +24,8 @@ import (
 	"path/filepath"
 	"crypto/sha256"
     	"encoding/base64"
-        "math"
+    	"golang.org/x/exp/utf8string"
+        //"math"
 
 
 
@@ -88,6 +89,8 @@ type FileStatus struct{
 
 func procfiles ( outfile *os.File ) {
 
+   ORG_ROOT :=  "sanfrancisco.huzzlee.com//"
+
    const filechunk = 8192    // we settle for 8KB  
    
    outfile.WriteString( "\r\nSTART PROCFILES \r\n\r\n" )
@@ -114,12 +117,40 @@ func procfiles ( outfile *os.File ) {
 	    }
     defer stFileDirHash.Close() //  
     //----------------------------------------------------------------------
+    // Prepare statement for inserting data into fdiscovery.filerdirhash ///
+    stFileRDirHash, err := db.Prepare("INSERT INTO fdiscovery.filerdirhash  VALUES( ?, ?, ? )") // 
+	    if err != nil {
+		outfile.WriteString(err.Error()) //  
+	    }
+    defer stFileRDirHash.Close() //  
+    //----------------------------------------------------------------------
+    // Prepare statement for inserting data into fdiscovery.fileodirhash ///
+    stFileODirHash, err := db.Prepare("INSERT INTO fdiscovery.fileodirhash  VALUES( ?, ?, ? )") // 
+	    if err != nil {
+		outfile.WriteString(err.Error()) //  
+	    }
+    defer stFileODirHash.Close() //  
+    //----------------------------------------------------------------------
     // Prepare statement for inserting data into fdiscovery.filepathhash ///
     stFilePathHash, err := db.Prepare("INSERT INTO fdiscovery.filepathhash  VALUES( ?, ? )") // 
 	    if err != nil {
 		outfile.WriteString(err.Error()) //  
 	    }
     defer stFilePathHash.Close() //  
+    //----------------------------------------------------------------------
+    // Prepare statement for inserting data into fdiscovery.filerpathhash ///
+    stFileRPathHash, err := db.Prepare("INSERT INTO fdiscovery.filerpathhash  VALUES( ?, ?, ? )") // 
+	    if err != nil {
+		outfile.WriteString(err.Error()) //  
+	    }
+    defer stFileRPathHash.Close() //  
+    //----------------------------------------------------------------------
+    // Prepare statement for inserting data into fdiscovery.fileopathhash ///
+    stFileOPathHash, err := db.Prepare("INSERT INTO fdiscovery.fileopathhash  VALUES( ?, ?, ? )") // 
+	    if err != nil {
+		outfile.WriteString(err.Error()) //  
+	    }
+    defer stFileOPathHash.Close() //  
     //----------------------------------------------------------------------
     // Prepare statement for inserting data into fdiscovery.filehash ///
     stFileHash, err := db.Prepare("INSERT INTO fdiscovery.filehash  VALUES( ?, ? )") // 
@@ -167,13 +198,17 @@ var (
 
 FileStatus := "NEW"
 
-for i := 46; i < 1000; i++ {
+for i := 4 ; i < 1438884 ; i++ {
     err = filequery.QueryRow(i).Scan( &RecId, &RootId, &FileType, &FileName, &FileExtension, &FileDir, &FilePath, &FileSize, &ModTimeLocal)
     if err != nil {
     		outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
     }
-    outfile.WriteString( FileName )
-    outfile.WriteString( FilePath )
+    //outfile.WriteString( "\r\nFILENO: " )
+    //outfile.WriteString( strconv.Itoa( int( i) ) );
+    //outfile.WriteString( "\r\nFILENAME: " )
+    //outfile.WriteString( FileName )
+    //outfile.WriteString( "\r\nFILEPATH: " )
+    //outfile.WriteString( FilePath )
     
     ///===============================================================================
     FileNameVec := []byte(FileName) 
@@ -189,21 +224,79 @@ for i := 46; i < 1000; i++ {
     FileDirHasher := sha256.New()
     FileDirHasher.Write(FileDirVec)
     FileDirHash := base64.URLEncoding.EncodeToString(FileDirHasher.Sum(nil))
+    
+    FileDirU8 := utf8string.NewString(FileDir)
+    FileRDir := FileDirU8.Slice( 3,   FileDirU8.RuneCount() )
+    FileRDirVec := []byte(FileRDir) 
+    FileRDirHasher := sha256.New()
+    FileRDirHasher.Write(FileRDirVec)
+    FileRDirHash := base64.URLEncoding.EncodeToString(FileRDirHasher.Sum(nil))
+    
+    //outfile.WriteString( "\r\nFileRDir: " )
+    //outfile.WriteString( FileRDir )
+        
+    FileODir := ORG_ROOT + FileDir
+    FileODirVec := []byte(FileODir) 
+    FileODirHasher := sha256.New()
+    FileODirHasher.Write(FileODirVec)
+    FileODirHash := base64.URLEncoding.EncodeToString(FileODirHasher.Sum(nil))
+    
+    //outfile.WriteString( "\r\nFileODir: " )
+    //outfile.WriteString( FileODir )
+    
     _, err = stFileDirHash.Exec( RecId,  FileDirHash  ) // Insert data from fd
     	if err != nil {
     		outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
    	}  
+    _, err = stFileRDirHash.Exec( RecId,  FileRDirHash, FileRDir  ) // Insert data from fd
+    	if err != nil {
+    		outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
+   	}  
+    _, err = stFileODirHash.Exec( RecId,  FileODirHash, FileODir  ) // Insert data from fd
+    	if err != nil {
+    		outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
+   	}  
     ///===============================================================================
+    
     FilePathVec := []byte(FilePath) 
     FilePathHasher := sha256.New()
     FilePathHasher.Write(FilePathVec)
     FilePathHash := base64.URLEncoding.EncodeToString(FilePathHasher.Sum(nil))
+    
+    FilePathU8 := utf8string.NewString(FilePath)
+    FileRPath := FilePathU8.Slice( 3,   FilePathU8.RuneCount()  )
+    FileRPathVec := []byte(FileRPath) 
+    FileRPathHasher := sha256.New()
+    FileRPathHasher.Write(FileRPathVec)
+    FileRPathHash := base64.URLEncoding.EncodeToString(FileRPathHasher.Sum(nil))
+    
+    //outfile.WriteString( "\r\nFileRPath: " )
+    //outfile.WriteString( FileRPath )
+    
+    FileOPath := ORG_ROOT + FilePath
+    FileOPathVec := []byte(FileOPath) 
+    FileOPathHasher := sha256.New()
+    FileOPathHasher.Write(FileOPathVec)
+    FileOPathHash := base64.URLEncoding.EncodeToString(FileOPathHasher.Sum(nil))
+    
+    //outfile.WriteString( "\r\nFileOPath: " )
+    //outfile.WriteString( FileOPath )
+    
     _, err = stFilePathHash.Exec( RecId,  FilePathHash  ) // Insert data from fd
     	if err != nil {
     		outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
    	}
+    _, err = stFileRPathHash.Exec( RecId,  FileRPathHash, FileRPath  ) // Insert data from fd
+    	if err != nil {
+    		outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
+   	}
+    _, err = stFileOPathHash.Exec( RecId,  FileOPathHash, FileOPath  ) // Insert data from fd
+    	if err != nil {
+    		outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
+   	}
     ///===============================================================================
-    FileSizeNum, err := strconv.ParseInt(FileSize, 10, 64)
+    //FileSizeNum, err := strconv.ParseInt(FileSize, 20, 64)
+    FileSizeNum, err := strconv.Atoi( FileSize )
     _, err = stFileSize.Exec( RecId, FileSizeNum  ) // Insert data from fd
     	if err != nil {
     		outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
@@ -221,7 +314,8 @@ for i := 46; i < 1000; i++ {
         outfile.WriteString( "\r\n PROBLEM: " )
         outfile.WriteString( FilePath )
     }
-    
+
+/*    
     if FileType == "FILE" {
     if true != strings.Contains(FilePath, RECY)  {    
 	    outfile.WriteString( "\r\nFILE: " )
@@ -247,6 +341,8 @@ for i := 46; i < 1000; i++ {
 	    FileHash = base64.URLEncoding.EncodeToString(FileHasher.Sum(nil))
     }
     }
+    
+*/
     _, err = stFileHash.Exec( RecId, FileHash  ) // Insert data from fd
 	if err != nil {
 	    	outfile.WriteString( "\r\nDBERROR\r\n" )
