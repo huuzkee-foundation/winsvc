@@ -157,15 +157,14 @@ func procdirs(outfile *os.File) {
 
 	FileStatus := "NEW"
 
-	for i := 4; i < 1438884; i++ {
+	for i := 7430; i < 1438884; i++ {
 		err = filequery.QueryRow(i).Scan(&RecId, &RootId, &FileType, &FileName, &FileExtension, &Dir, &FilePath, &FileSize, &ModTimeLocal)
 		if err != nil {
 			outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
 		}
 
-
 		if FileType == "DIR" {
-		
+
 			outfile.WriteString("\r\nFILENO: ")
 			outfile.WriteString(strconv.Itoa(int(i)))
 			//outfile.WriteString( "\r\nFILENAME: " )
