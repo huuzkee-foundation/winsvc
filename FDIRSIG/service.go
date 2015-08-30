@@ -106,7 +106,7 @@ func procdirs(outfile *os.File) {
 
 	//----------------------------------------------------------------------
 	// Prepare statement for inserting data into fdiscovery.dirhash ///
-	stDirHash, err := db.Prepare("INSERT INTO fdiscovery.dirhash  VALUES( ?, ? )") //
+	stDirHash, err := db.Prepare("INSERT INTO fdiscovery.dirhash  VALUES( ?, ?, ? )") //
 	if err != nil {
 		outfile.WriteString(err.Error()) //
 	}
@@ -162,14 +162,16 @@ func procdirs(outfile *os.File) {
 		if err != nil {
 			outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
 		}
-		outfile.WriteString("\r\nFILENO: ")
-		outfile.WriteString(strconv.Itoa(int(i)))
-		//outfile.WriteString( "\r\nFILENAME: " )
-		//outfile.WriteString( FileName )
-		outfile.WriteString("\r\nFILEPATH: ")
-		outfile.WriteString(FilePath)
 
-		if FileType == "FILE" {
+
+		if FileType == "DIR" {
+		
+			outfile.WriteString("\r\nFILENO: ")
+			outfile.WriteString(strconv.Itoa(int(i)))
+			//outfile.WriteString( "\r\nFILENAME: " )
+			//outfile.WriteString( FileName )
+			outfile.WriteString("\r\nFILEPATH: ")
+			outfile.WriteString(FilePath)
 
 			///===============================================================================
 			DirVec := []byte(Dir)
@@ -649,7 +651,7 @@ func (m *myservice) Execute(args []string, r <-chan svc.ChangeRequest, changes c
 	tick := fasttick
 	changes <- svc.Status{State: svc.Running, Accepts: cmdsAccepted}
 
-	QUERYHUB_SERVICE := "MDS-SERVICE"
+	QUERYHUB_SERVICE := "DIRSIG-SERVICE"
 	//QUERYHUB_ROOT 			:= "C:\\play\\portal\\queryhub\\"
 	QUERYHUB_ROOT := "D:\\"
 	QUERYHUB_LOG := QUERYHUB_ROOT + QUERYHUB_SERVICE + ".LOG"
