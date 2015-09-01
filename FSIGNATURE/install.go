@@ -7,9 +7,9 @@
 package main
 
 import (
+	"fmt"
 	"github.com/huuzkee-foundation/winsvc/eventlog"
 	"github.com/huuzkee-foundation/winsvc/mgr"
-	"fmt"
 	"os"
 	"path/filepath"
 )

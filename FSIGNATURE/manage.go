@@ -7,9 +7,9 @@
 package main
 
 import (
+	"fmt"
 	"github.com/huuzkee-foundation/winsvc/mgr"
 	"github.com/huuzkee-foundation/winsvc/svc"
-	"fmt"
 	"time"
 )
 

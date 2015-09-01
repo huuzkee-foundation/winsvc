@@ -46,20 +46,20 @@ func walkpath(path string, f os.FileInfo, err error, outfile *os.File, fchan cha
    
    filetype := "FILE"
    if f.IsDir() { filetype = "DIR" }
-   //outfile.WriteString( filetype );
-   //outfile.WriteString( ",\t\"")
-   //outfile.WriteString( f.Name() );
-   //outfile.WriteString( "\",\t")
-   //outfile.WriteString( filepath.Ext(path) );
-   //outfile.WriteString( ",\t\"")
-   //outfile.WriteString( filepath.Dir(path) );
-   //outfile.WriteString( "\",\t\"")
-   //outfile.WriteString( f.ModTime().String() );
-   //outfile.WriteString( "\",\t")
-   //outfile.WriteString( strconv.Itoa( int(f.Size()) ) );
-   //outfile.WriteString( ",\t\"")
-   //outfile.WriteString( path );
-   //outfile.WriteString( "\"\r\n")
+   outfile.WriteString( filetype );
+   outfile.WriteString( ",\t\"")
+   outfile.WriteString( f.Name() );
+   outfile.WriteString( "\",\t")
+   outfile.WriteString( filepath.Ext(path) );
+   outfile.WriteString( ",\t\"")
+   outfile.WriteString( filepath.Dir(path) );
+   outfile.WriteString( "\",\t\"")
+   outfile.WriteString( f.ModTime().String() );
+   outfile.WriteString( "\",\t")
+   outfile.WriteString( strconv.Itoa( int(f.Size()) ) );
+   outfile.WriteString( ",\t\"")
+   outfile.WriteString( path );
+   outfile.WriteString( "\"\r\n")
    
    fdesc := FileDesc{ 	"0000",	filetype, f.Name(), filepath.Ext(path), filepath.Dir(path), path, strconv.Itoa( int(f.Size()) ), f.ModTime().String()	}
    fchan <- fdesc
@@ -113,12 +113,23 @@ func dbwork ( outfile *os.File, fchan chan FileDesc ) {
     //    }
     //}
     
-    recid := 1
+    recid := 1438885
     
     for {
 	select {
             case fd := <-fchan:
             	      recid = recid + 1
+            	      
+                      outfile.WriteString("\r\nDB: ")
+                      outfile.WriteString( strconv.Itoa( int(recid)) )
+                      outfile.WriteString("\t")
+                      outfile.WriteString(fd.FileName)
+                      outfile.WriteString("\t")
+                      outfile.WriteString(fd.FileDir)
+                      outfile.WriteString("\t")                      
+                      outfile.WriteString(fd.FilePath)
+                      outfile.WriteString("\r\n")
+
     		      _, err = stmtIns.Exec( strconv.Itoa( int(recid)), fd.RootId, fd.FileType, fd.FileName, fd.FileExtension, fd.FileDir, fd.FilePath, fd.FileSize, fd.ModTimeLocal  ) // Insert data from fd
     		      if err != nil {
     				outfile.WriteString(err.Error()) // proper error handling instead of panic in your app
@@ -193,7 +204,7 @@ func (m *myservice) Execute(args []string, r <-chan svc.ChangeRequest, changes c
 	
 	QUERYHUB_SERVICE		:= "MDS-SERVICE"
 	//QUERYHUB_ROOT 			:= "C:\\play\\portal\\queryhub\\"
-	QUERYHUB_ROOT 			:= "D:\\"
+	QUERYHUB_ROOT 			:= "C:\\HMOUNT\\"
 	QUERYHUB_LOG			:= QUERYHUB_ROOT + QUERYHUB_SERVICE + ".LOG"
 	//QUERYHUB_ACTIVATOR		:= QUERYHUB_ROOT + "activator.bat"
 	QUERYHUB_SEMAPHORE_RUNNING  	:= QUERYHUB_ROOT + QUERYHUB_SERVICE + ".IS.RUNNING"

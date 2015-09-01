@@ -13,8 +13,8 @@
 package main
 
 import (
-	"github.com/huuzkee-foundation/winsvc/svc"
 	"fmt"
+	"github.com/huuzkee-foundation/winsvc/svc"
 	"log"
 	"os"
 	"strings"
@@ -33,7 +33,7 @@ func usage(errmsg string) {
 func main() {
 	const svcName = "FSIGNATURE"
 	const svcDesc = "FSIGNATURE-Middleware"
-	
+
 	isIntSess, err := svc.IsAnInteractiveSession()
 	if err != nil {
 		log.Fatalf("failed to determine if we are running in an interactive session: %v", err)
@@ -53,7 +53,7 @@ func main() {
 		runService(svcName, true)
 		return
 	case "install":
-		err = installService(svcName, svcDesc )
+		err = installService(svcName, svcDesc)
 	case "remove":
 		err = removeService(svcName)
 	case "start":
